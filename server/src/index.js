@@ -3,6 +3,8 @@ const connectDB = require("./db/connect");
 const authRoutes = require("./routes/auth.route");
 const cookieParser = require("cookie-parser");
 const messageRoutes = require("./routes/message.route");
+const cors = require("cors");
+const notFound = require("./middlewares/not-found");
 require("dotenv").config();
 
 const app = express();
@@ -10,7 +12,12 @@ const app = express();
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
-
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 // Routes
 app.get("/", (req, res) => {
   res.send("Welcome to the Chat App!");
@@ -18,6 +25,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+
+app.use(notFound);
 
 // Connect to MongoDB
 const start = async () => {

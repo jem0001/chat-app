@@ -85,41 +85,29 @@ const logoutUser = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-    const { public_id, secure_url } = await uploadImage(req.file.path);
+    const { email, fullName } = req.body;
+    const updateFields = {};
 
-    await fs.unlink(`src/uploads/${req.file.filename}`);
+    if (email) updateFields.email = email;
+    if (fullName) updateFields.fullName = fullName;
+
+    if (req.file) {
+      const { public_id, secure_url } = await uploadImage(req.file.path);
+
+      await fs.unlink(`src/uploads/${req.file.filename}`);
+      updateFields.profilePic = secure_url;
+    }
 
     const id = req.user._id;
-
-    const user = await User.findById(id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { profilePic: secure_url },
+      { ...updateFields },
       { new: true, runValidators: true }
     ).select("-password");
 
     res
       .status(201)
-      .json({ message: "Profile pic updated successfully", user: updatedUser });
-
-    // add image to db
-    const newlyAddedImage = await Image.create({
-      publicId: public_id,
-      url,
-      createdBy: req.userInfo._id,
-    });
-
-    res
-      .status(201)
-      .json({ message: "image Added Successfully", image: newlyAddedImage });
+      .json({ message: "Profile  updated successfully", user: updatedUser });
   } catch (error) {
     console.log("Error on updateProfile controller");
     res.status(500).json({ message: "Internal Server Error " + error });
